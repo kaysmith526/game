@@ -1,40 +1,34 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace StarterGame.Commands
+namespace StarterGame
 {
+    /*
+     * Spring 2023
+     */
     public class HelpCommand : Command
     {
         private CommandWords _words;
 
-        public HelpCommand() : this(new CommandWords()) { }
+        public HelpCommand() : this(new CommandWords()){}
 
         // Designated Constructor
         public HelpCommand(CommandWords commands) : base()
         {
             _words = commands;
-            Name = "help";
-            Usage = "help <command>";
+            this.Name = "help";
         }
 
         override
         public bool Execute(Player player)
         {
-            if (HasSecondWord())
+            if (this.HasSecondWord())
             {
-                Command command = _words.Get(SecondWord);
-                if (command != null) //does command passed as second word exist?
-                {
-                    player.OutputMessage("Here's how to use >" + command.Name + "\n* " + command.Usage + "\n");
-                }
-                else
-                {
-                    player.OutputMessage("\nThere is no command called >" + SecondWord);
-                }
+                player.WarningMessage("\nI cannot help you with " + this.SecondWord);
             }
             else
             {
-                player.OutputMessage("Here is a list of commands available to you\n" + _words.Description());
+                player.InfoMessage("\nYou are lost. You are alone. You wander around the university, \n\nYour available commands are " + _words.Description());
             }
             return false;
         }

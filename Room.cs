@@ -1,212 +1,54 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System;
-using System.Buffers;
-using System.Xml.Linq;
 
-namespace StarterGame.Rooms
+namespace StarterGame
 {
+    /*
+     * Spring 2023
+     */
     public class Room
     {
-        private string _name;
+        private Dictionary<string, Room> _exits;
         private string _tag;
-        private Dictionary<string, Door> _exits;
-        private Dictionary<string, IItem> _items;
-        private Dictionary<string, IItemContainer> _containers;
+        public string Tag { get { return _tag; } set { _tag = value; } }
 
-        public IRoomDelegate Delegate { get; set; }
+        public Room() : this("No Tag"){}
 
-        public string Name { get { return _name; } }
-        public string Tag { get { return _tag; } }
-
-        public Room(string name) : this(name, "No Tag") { }
-        public Room(string name, string tag)
+        // Designated Constructor
+        public Room(string tag)
         {
-            _exits = new Dictionary<string, Door>();
-            _items = new Dictionary<string, IItem>();
-            _containers = new Dictionary<string, IItemContainer>();
-            _name = name;
-            _tag = tag;
+            _exits = new Dictionary<string, Room>();
+            this.Tag = tag;
         }
 
-        public string Description()
+        public void SetExit(string exitName, Room room)
         {
-            //combines multiple line with the new line separator
-            return string.Join("\n",
-                "You are in " + Name,
-                Tag,
-                "*** " + GetExits());
+            _exits[exitName] = room;
         }
 
-        public void SetExit(Room room)
+        public Room GetExit(string exitName)
         {
-            Door door = new Door(this, room);
-            door.Open();
-            this._exits[room.Name] = door;
-            room._exits[this.Name] = door; //applies opposite connection
-        }
-
-        //overload to set if door is opened by default
-        public void SetExit(Room room, bool isOpened)
-        {
-            Door door = new Door(this, room);
-            if (isOpened) { door.Open(); }
-            this._exits[room.Name] = door;
-            room._exits[this.Name] = door; //applies opposite connection
-        }
-
-        //overload to create locked door with given key
-        public void SetExit(Room room, Key key)
-        {
-            Door door = new Door(this, room, key);
-            this._exits[room.Name] = door;
-            room._exits[this.Name] = door; //applies opposite connection
-        }
-
-        public Door GetExit(string exitName)
-        {
-            _exits.TryGetValue(exitName, out var door);
-            return door;
+            Room room = null;
+            _exits.TryGetValue(exitName, out room);
+            return room;
         }
 
         public string GetExits()
         {
-            string exits = "Room Options: ";
-            Dictionary<string, Door>.KeyCollection keys = _exits.Keys;
+            string exitNames = "Exits: ";
+            Dictionary<string, Room>.KeyCollection keys = _exits.Keys;
             foreach (string exitName in keys)
             {
-                exits += " " + exitName;
+                exitNames += " " + exitName;
             }
 
-            return exits;
-        }
-
-        public string GetItems()
-        {
-            string items = "Items Available: ";
-            Dictionary<string, IItem>.KeyCollection keys = _items.Keys;
-            foreach (string itemName in keys)
-            {
-                items += " " + itemName;
-            }
-
-            return items;
-        }
-
-        //add to room item list
-        public void Drop(IItem item)
-        {
-            _items.Add(item.Name, item);
-        }
-
-        public void Inspect(IItem item)
-        {
-            _items.Add(item.Name, item);
-
-        }
-
-        public IItem Pick(string name)
-        {
-            _items.Remove(name, out var item);
-            return item;
-        }
-
-        public bool ContainsItems(string name)
-        {
-            return _items.ContainsKey(name);
-        }
-    }
-
-    public class TrapRoom : IRoomDelegate
-    {
-        public string Unlocked { get; set; }
-        public Room ContainingRoom { get; set; }
-
-        public TrapRoom() : this("password") { }
-        public TrapRoom(string unlockWord)
-        {
-            Unlocked = unlockWord;
-            NotificationCenter.Instance.AddObserver("PlayerDidSayword", PlayerDidSayWord);
-        }
-
-        public Door GetExit(string exitName)
-        {
-            return null;
-        }
-
-        public string GetExits()
-        {
-            return "";
-        }
-
-
-        public string Description()
-        {
-            return "You are in a trap room. GOOD LUCK GETTING OUT HA";
-        }
-
-        public void PlayerDidSayWord(Notification notification)
-        {
-            Player player = (Player)notification.Object;
-            if (player != null)
-            {
-                if (player.CurrentRoom.Delegate == this)
-                {
-                    Dictionary<string, object> userInfo = notification.UserInfo;
-                    string word = (string)userInfo["word"];
-                    if (word.Equals(Unlocked))
-                    {
-                        player.OutputMessage("That is correct");
-                        player.CurrentRoom.Delegate = null;
-                        player.OutputMessage("\n" + player.CurrentRoom.Delegate);
-                        NotificationCenter.Instance.RemoveObserver("PlayerDidSayWord", PlayerDidSayWord);
-                    }
-                    else
-                    {
-                        player.OutputMessage("That's not it:" + word);
-
-                    }
-                }
-            }
-        }
-    }
-
-    public class EchoRoom : IRoomDelegate
-    {
-        public Room ContainingRoom { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-        public Door GetExit(string exitName)
-        {
-            return null;
-        }
-
-        public string GetExits()
-        {
-            return "Echo Room";
+            return exitNames;
         }
 
         public string Description()
         {
-            string description = "You are in an echo room.";
-            ContainingRoom.Delegate = null;
-            description += ContainingRoom.Description();
-            ContainingRoom.Delegate = this;
-
-            return description;
-        }
-        public void PlayerDidSayWord(Notification notification)
-        {
-            Player player = (Player)notification.Object;
-
-            if (player != null)
-            {
-                if (player.CurrentRoom.Delegate == this)
-                {
-                    Dictionary<string, object> userInfo = notification.UserInfo;
-                    string word = (string)userInfo["word"];
-                    player.OutputMessage("\n" + word + "..." + word + "..." + word + "\n");
-                }
-            }
+            return "You are " + this.Tag + ".\n *** " + this.GetExits();
         }
     }
 }

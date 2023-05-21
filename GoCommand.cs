@@ -6,24 +6,26 @@ namespace StarterGame
     /*
      * Spring 2023
      */
-    public class QuitCommand : Command
+    public class GoCommand : Command
     {
 
-        public QuitCommand() : base()
+        public GoCommand() : base()
         {
-            this.Name = "quit";
+            this.Name = "go";
         }
 
         override
         public bool Execute(Player player)
         {
-            bool answer = true;
             if (this.HasSecondWord())
             {
-                player.WarningMessage("\nI cannot quit " + this.SecondWord);
-                answer = false;
+                player.WaltTo(this.SecondWord);
             }
-            return answer;
+            else
+            {
+                player.WarningMessage("\nGo Where?");
+            }
+            return false;
         }
     }
 }
